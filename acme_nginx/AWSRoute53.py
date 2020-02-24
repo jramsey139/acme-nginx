@@ -16,13 +16,22 @@ class AWSRoute53(object):
         """
         if not domain.endswith('.'):
             domain = domain + '.'
+
+        zones = list()
+
         # use paginator to iterate over all hosted zones
         paginator = self.client.get_paginator('list_hosted_zones')
         # https://github.com/boto/botocore/issues/1535 result_key_iters is undocumented
         for page in paginator.paginate().result_key_iters():
             for result in page:
                 if result['Name'] in domain:
-                    return result['Id']
+                    zones.append(result)
+
+        if len(zones) > 0:
+            zones.sort(key=lambda z: len(z['Name']), reverse=True)
+            return zones[0]['Id']
+
+        return None
 
     def create_record(self, name, data, domain):
         """
